@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import logging
 from typing import Any
 from urllib.parse import quote
 from uuid import uuid4
@@ -21,6 +22,7 @@ from .const import (
 )
 
 CORRELATION_SALT = b"pm9xVE8R22x9YqZbYrodrzYyJaUsUImGsM7h7n4e"
+_LOGGER = logging.getLogger(__name__)
 
 
 class FraenkError(Exception):
@@ -83,6 +85,47 @@ def build_correlation_id(body: str | None) -> str:
     return hashlib.sha256(CORRELATION_SALT + okio_text.encode()).hexdigest()
 
 
+def _oauth_error_fields(
+    data: dict[str, Any],
+) -> tuple[str | None, str | None, str | None]:
+    """Extract OAuth error fields from known fraenk response variants."""
+    containers = [data]
+    for key in ("data", "errorData", "oauthError"):
+        nested = data.get(key)
+        if isinstance(nested, dict):
+            containers.append(nested)
+
+    for container in containers:
+        error_value = container.get("error")
+        if isinstance(error_value, dict):
+            containers.append(error_value)
+            continue
+        error = (
+            error_value
+            or container.get("errorCode")
+            or container.get("error_code")
+            or container.get("code")
+        )
+        description = (
+            container.get("error_description")
+            or container.get("errorDescription")
+            or container.get("description")
+            or container.get("message")
+        )
+        mfa_token = (
+            container.get("mfa_token")
+            or container.get("mfaToken")
+            or container.get("mfa-token")
+        )
+        if error or mfa_token:
+            return (
+                str(error) if error is not None else None,
+                str(description) if description is not None else None,
+                str(mfa_token) if mfa_token is not None else None,
+            )
+    return None, None, None
+
+
 class FraenkApi:
     """Client for the fraenk Android app backend."""
 
@@ -126,15 +169,31 @@ class FraenkApi:
         if response.status in (401, 403):
             raise FraenkAuthenticationError("Authentication expired")
         if response.status >= 400:
-            error = data.get("error") if isinstance(data, dict) else None
-            description = data.get("error_description") if isinstance(data, dict) else None
-            if error == "mfa_required":
-                token = data.get("mfa_token")
-                if token:
-                    raise FraenkMfaRequired(str(token))
-            if error in {"wrong_mtan", "mfa_invalid_request", "mfa_already_requested"}:
+            error: str | None = None
+            description: str | None = None
+            mfa_token: str | None = None
+            if isinstance(data, dict):
+                error, description, mfa_token = _oauth_error_fields(data)
+                _LOGGER.debug(
+                    "fraenk authentication response: HTTP %s, error=%s, fields=%s",
+                    response.status,
+                    error,
+                    sorted(data),
+                )
+            normalized_error = (error or "").casefold()
+            if normalized_error == "mfa_required" or (
+                mfa_token and "mfa" in normalized_error
+            ):
+                if mfa_token:
+                    raise FraenkMfaRequired(mfa_token)
+                raise FraenkError("MFA response did not include a token")
+            if normalized_error in {
+                "wrong_mtan",
+                "mfa_invalid_request",
+                "mfa_already_requested",
+            }:
                 raise FraenkMfaError(str(description or error))
-            if error in {"invalid_grant", "unauthorized", "invalid_token"}:
+            if normalized_error in {"invalid_grant", "unauthorized", "invalid_token"}:
                 raise FraenkAuthenticationError(str(description or error))
             raise FraenkError(str(description or error or f"HTTP {response.status}"))
         return data
@@ -163,9 +222,13 @@ class FraenkApi:
 
     def _apply_tokens(self, data: dict[str, Any]) -> FraenkTokens:
         """Apply an authentication response."""
-        access_token = data.get("access_token")
-        refresh_token = data.get("refresh_token") or self.refresh_token
-        customer_id = data.get("customerId") or data.get("customer_id") or self.customer_id
+        access_token = data.get("access_token") or data.get("accessToken")
+        refresh_token = (
+            data.get("refresh_token") or data.get("refreshToken") or self.refresh_token
+        )
+        customer_id = (
+            data.get("customerId") or data.get("customer_id") or self.customer_id
+        )
         if not access_token or not refresh_token or not customer_id:
             raise FraenkAuthenticationError("Authentication response is incomplete")
         self.access_token = str(access_token)
@@ -274,4 +337,3 @@ class FraenkApi:
                     }
                 )
         return result
-

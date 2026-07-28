@@ -23,7 +23,11 @@ for module_name in ("const", "api"):
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
 
-from fraenk_mobile.api import build_correlation_id, build_form  # noqa: E402
+from fraenk_mobile.api import (  # noqa: E402
+    _oauth_error_fields,
+    build_correlation_id,
+    build_form,
+)
 
 
 def test_okhttp_form_encoding() -> None:
@@ -51,3 +55,24 @@ def test_correlation_id() -> None:
         "0cd8f8766f1cb4b99e9f60198760331"
     )
 
+
+def test_mfa_error_snake_case() -> None:
+    """Parse the OAuth-style response observed in the PowerShell test."""
+    assert _oauth_error_fields(
+        {
+            "error": "mfa_required",
+            "error_description": "SMS sent",
+            "mfa_token": "secret",
+        }
+    ) == ("mfa_required", "SMS sent", "secret")
+
+
+def test_mfa_error_camel_case() -> None:
+    """Parse the field names used by the Android response model."""
+    assert _oauth_error_fields(
+        {
+            "error": "mfa_required",
+            "errorDescription": "SMS sent",
+            "mfaToken": "secret",
+        }
+    ) == ("mfa_required", "SMS sent", "secret")

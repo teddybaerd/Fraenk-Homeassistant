@@ -58,8 +58,8 @@ hochladen.
 ## 5. Erste Release erstellen
 
 1. Öffne **Releases → Draft a new release**.
-2. Erzeuge den Tag `v0.1.0`.
-3. Release-Titel: `v0.1.0`.
+2. Erzeuge den Tag `v0.1.1`.
+3. Release-Titel: `v0.1.1`.
 4. Beschreibung beispielsweise:
 
    ```text
