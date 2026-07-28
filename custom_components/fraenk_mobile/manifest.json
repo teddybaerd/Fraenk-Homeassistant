@@ -1,0 +1,13 @@
+{
+  "domain": "fraenk_mobile",
+  "name": "fraenk Mobile",
+  "codeowners": [
+    "@teddybaerd"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/teddybaerd/Fraenk-Homeassistant",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/teddybaerd/Fraenk-Homeassistant/issues",
+  "version": "0.1.0"
+}

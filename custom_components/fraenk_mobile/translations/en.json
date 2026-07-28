@@ -1,0 +1,70 @@
+{
+  "title": "fraenk Mobile",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to fraenk",
+        "description": "Sign in with your fraenk app credentials. The password is not stored.",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "mfa": {
+        "title": "Confirm SMS code",
+        "description": "fraenk sent an mTAN to you by SMS.",
+        "data": {
+          "mtan": "mTAN"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate fraenk",
+        "description": "The session expired. Sign in again; the password is not stored.",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "reauth_mfa": {
+        "title": "Confirm SMS code",
+        "description": "fraenk sent a new mTAN to you by SMS.",
+        "data": {
+          "mtan": "mTAN"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to fraenk.",
+      "invalid_auth": "The username or password is invalid.",
+      "invalid_mtan": "The mTAN is invalid or expired.",
+      "unknown": "Unexpected login error."
+    },
+    "abort": {
+      "already_configured": "This fraenk account is already configured.",
+      "reauth_successful": "Reauthentication was successful.",
+      "wrong_account": "The supplied credentials belong to a different fraenk account."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "used_data": {
+        "name": "Data used"
+      },
+      "remaining_data": {
+        "name": "Data remaining"
+      },
+      "total_data": {
+        "name": "Total data"
+      },
+      "consumption_percentage": {
+        "name": "Consumption"
+      },
+      "expiry": {
+        "name": "Billing period ends"
+      },
+      "last_update": {
+        "name": "Last update at fraenk"
+      }
+    }
+  }
+}
