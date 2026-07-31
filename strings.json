@@ -1,0 +1,70 @@
+{
+  "title": "fraenk Mobile",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit fraenk verbinden",
+        "description": "Melde dich mit den Zugangsdaten der fraenk-App an. Das Passwort wird nicht gespeichert.",
+        "data": {
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      },
+      "mfa": {
+        "title": "SMS-Code bestätigen",
+        "description": "fraenk hat dir eine mTAN per SMS gesendet.",
+        "data": {
+          "mtan": "mTAN"
+        }
+      },
+      "reauth_confirm": {
+        "title": "fraenk erneut authentifizieren",
+        "description": "Die Sitzung ist abgelaufen. Melde dich erneut an; das Passwort wird nicht gespeichert.",
+        "data": {
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      },
+      "reauth_mfa": {
+        "title": "SMS-Code bestätigen",
+        "description": "fraenk hat dir eine neue mTAN per SMS gesendet.",
+        "data": {
+          "mtan": "mTAN"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zu fraenk fehlgeschlagen.",
+      "invalid_auth": "Benutzername oder Passwort ist ungültig.",
+      "invalid_mtan": "Die mTAN ist ungültig oder abgelaufen.",
+      "unknown": "Unerwarteter Fehler bei der Anmeldung."
+    },
+    "abort": {
+      "already_configured": "Dieses fraenk-Konto ist bereits eingerichtet.",
+      "reauth_successful": "Die erneute Authentifizierung war erfolgreich.",
+      "wrong_account": "Die eingegebenen Zugangsdaten gehören zu einem anderen fraenk-Konto."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "used_data": {
+        "name": "Datenverbrauch"
+      },
+      "remaining_data": {
+        "name": "Verbleibendes Datenvolumen"
+      },
+      "total_data": {
+        "name": "Datenvolumen gesamt"
+      },
+      "consumption_percentage": {
+        "name": "Verbrauch"
+      },
+      "expiry": {
+        "name": "Abrechnungszeitraum endet"
+      },
+      "last_update": {
+        "name": "Letzte Aktualisierung bei fraenk"
+      }
+    }
+  }
+}
