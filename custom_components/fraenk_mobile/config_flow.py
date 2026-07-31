@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import voluptuous as vol
@@ -20,6 +21,8 @@ from .api import (
     FraenkTokens,
 )
 from .const import CONF_CUSTOMER_ID, CONF_REFRESH_TOKEN, DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 STEP_USER_SCHEMA = vol.Schema(
     {
@@ -78,12 +81,22 @@ class FraenkConfigFlow(ConfigFlow, domain=DOMAIN):
             tokens = await self._api().async_login(self._username, self._password)
         except FraenkMfaRequired as err:
             self._mfa_token = err.mfa_token
-            return await self.async_step_reauth_mfa() if reauth else await self.async_step_mfa()
-        except FraenkAuthenticationError:
+            _LOGGER.warning("fraenk requested an SMS mTAN; opening the MFA step")
+            return (
+                await self.async_step_reauth_mfa()
+                if reauth
+                else await self.async_step_mfa()
+            )
+        except FraenkAuthenticationError as err:
+            _LOGGER.warning("fraenk login rejected: %s", type(err).__name__)
             errors["base"] = "invalid_auth"
-        except FraenkConnectionError:
+        except FraenkConnectionError as err:
+            _LOGGER.warning(
+                "fraenk connection failed: %s", type(err.__cause__).__name__
+            )
             errors["base"] = "cannot_connect"
-        except FraenkError:
+        except FraenkError as err:
+            _LOGGER.warning("fraenk login failed: %s", type(err).__name__)
             errors["base"] = "unknown"
         else:
             return await self._finish(tokens, reauth=reauth)

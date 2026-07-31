@@ -162,23 +162,34 @@ class FraenkApi:
         data: dict[str, Any] | list[Any] = {}
         if text:
             try:
-                data = json.loads(text)
+                data = json.loads(text.lstrip("\ufeff"))
             except json.JSONDecodeError as err:
+                _LOGGER.warning(
+                    "fraenk returned a non-JSON response: HTTP %s, length=%s, "
+                    "content-type=%s",
+                    response.status,
+                    len(text),
+                    response.headers.get("Content-Type"),
+                )
                 raise FraenkError(f"Invalid API response (HTTP {response.status})") from err
 
-        if response.status in (401, 403):
-            raise FraenkAuthenticationError("Authentication expired")
         if response.status >= 400:
             error: str | None = None
             description: str | None = None
             mfa_token: str | None = None
             if isinstance(data, dict):
                 error, description, mfa_token = _oauth_error_fields(data)
-                _LOGGER.debug(
+                _LOGGER.warning(
                     "fraenk authentication response: HTTP %s, error=%s, fields=%s",
                     response.status,
                     error,
                     sorted(data),
+                )
+            else:
+                _LOGGER.warning(
+                    "fraenk authentication response: HTTP %s, response_type=%s",
+                    response.status,
+                    type(data).__name__,
                 )
             normalized_error = (error or "").casefold()
             if normalized_error == "mfa_required" or (
@@ -193,7 +204,11 @@ class FraenkApi:
                 "mfa_already_requested",
             }:
                 raise FraenkMfaError(str(description or error))
-            if normalized_error in {"invalid_grant", "unauthorized", "invalid_token"}:
+            if response.status in (401, 403) or normalized_error in {
+                "invalid_grant",
+                "unauthorized",
+                "invalid_token",
+            }:
                 raise FraenkAuthenticationError(str(description or error))
             raise FraenkError(str(description or error or f"HTTP {response.status}"))
         return data
